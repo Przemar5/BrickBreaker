@@ -3,10 +3,14 @@ package brickbreaker.play;
 import brickbreaker.Game;
 import brickbreaker.Playable;
 import brickbreaker.Screen;
+import brickbreaker.Settings;
+import brickbreaker.menus.Menu;
+import brickbreaker.menus.MenuFactory;
 import brickbreaker.play.elements.*;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.HashMap;
 
 public class Play implements Playable
 {
@@ -16,7 +20,6 @@ public class Play implements Playable
     private Wall[] walls;
     private int wallWidth = 20;
     private BrickBoard brickBoard;
-
     private boolean running = false;
 
     public Play(Game game)
@@ -24,25 +27,29 @@ public class Play implements Playable
         this.game = game;
     }
 
-    public void init()
+    public void run()
     {
-        Screen screen = game.getScreen();
-
         running = true;
-        paddle = new Paddle((int) (screen.getWidth() / 2) - 60,
-                screen.getHeight() - 40, 120, 20);
-        paddle.setLeftBound(wallWidth);
-        paddle.setRightBound(screen.getWidth() - wallWidth);
-        ball = new Ball((int) (screen.getWidth() / 2),
-                (int) (screen.getHeight() / 2), 40, -2, -3);
-        walls = new Wall[]{
-                new Wall(0, 0, wallWidth, screen.getHeight()),
-                new Wall(0, 0, screen.getWidth(), wallWidth),
-                new Wall(screen.getWidth() - wallWidth,
-                        0, wallWidth, screen.getHeight()),
-        };
-        brickBoard = new BrickBoard(7, 16, screen.getWidth()-4*wallWidth,
-                screen.getHeight()/3, 2*wallWidth);
+    }
+
+    public void setWalls(Wall[] walls)
+    {
+        this.walls = walls;
+    }
+
+    public void setBall(Ball ball)
+    {
+        this.ball = ball;
+    }
+
+    public void setPaddle(Paddle paddle)
+    {
+        this.paddle = paddle;
+    }
+
+    public void setBrickBoard(BrickBoard bb)
+    {
+        this.brickBoard = bb;
     }
 
     @Override
@@ -67,11 +74,29 @@ public class Play implements Playable
     {
         Screen s = game.getScreen();
         if (ball.y + ball.height >= s.getHeight()) {
-            game.exitToFailMenu();
+            onLose(game);
         }
         else if (brickBoard.isEmpty()) {
-            game.exitToWinMenu();
+            onWin(game);
         }
+    }
+
+    private void onWin(Game game)
+    {
+        Menu menu = MenuFactory.createWonGameMenu(game.getScreen());
+        game.goToMenu(menu);
+    }
+
+    private void onLose(Game game)
+    {
+        Menu menu = MenuFactory.createLostGameMenu(game.getScreen());
+        game.goToMenu(menu);
+    }
+
+    private void onEscape(Game game)
+    {
+        Menu menu = MenuFactory.createGameStopMenu(game.getScreen());
+        game.goToMenu(menu);
     }
 
     @Override
@@ -109,7 +134,7 @@ public class Play implements Playable
         int keyCode = e.getKeyCode();
 
         if (keyCode == KeyEvent.VK_ESCAPE) {
-            game.exitToPlayMenu();
+            onEscape(game);
         }
         else if (keyCode == KeyEvent.VK_LEFT) {
             paddle.accelerateLeft();
